@@ -25,7 +25,7 @@ module.exports = function (grunt) {
         indent: 2,
         latedef: true,
         maxdepth: 9,
-        maxerr: 20
+        maxerr: 20,
         maxparams: 6,
         newcap: true,
         noarg: true,
