@@ -13,18 +13,17 @@ var Shield = (function shieldWrapper() {
   'use strict';
 
   function Shield_normalize(callback) {
-    if (callback == null) {
+    if(callback == null) {
       // do synchronous normalization
       return {stack: []};
-    } else {
-      // Do async things like remote fetching, etc
-      callback({
-        stack: [],
-        url: location.href
-        //...
-      });
     }
-  };
+    // Do async things like remote fetching, etc
+    return callback({
+      stack: [],
+      url: location.href
+      //...
+    });
+  }
 
   /**
    * @param arg {Error || Object || String}
@@ -37,7 +36,7 @@ var Shield = (function shieldWrapper() {
       //if no subscribers.. then throw an error or alert?
       //If we were to throw in this situation, I would call that an exceptionalException, and call that function above
     });
-  };
+  }
 
   return {
     report: Shield_report,
@@ -46,5 +45,5 @@ var Shield = (function shieldWrapper() {
 })();
 
 Shield.options = {
-    foo: 'bar'
+  foo: 'bar'
 };
