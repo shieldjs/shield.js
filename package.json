@@ -2,6 +2,7 @@
   "name": "shield.js",
   "version": "0.1.0",
   "devDependencies": {
+    "grunt-jasmine-runner": "~0.6.0",
     "grunt": "~0.3.17"
   },
   "scripts": {
