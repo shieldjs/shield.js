@@ -1,6 +1,8 @@
 /*! Shield.js v0.0.1 - Stack traces and moar - MIT licensed - https://github.com/Shield/shield.js */
 
 /**
+ * @method exceptionalException
+ *
  * exceptionalException
  * You know, for something that should REALLY never occur
  */
@@ -9,6 +11,9 @@ var exceptionalException = function exceptionalExceptionFn(message) {
   alert('HOLY MOLY! Please email this error to support@domain.com: \n\nSubject:Error\n' + message);
 };
 
+/**
+ * @class Shield
+ */
 var Shield = (function shieldWrapper() {
   'use strict';
 
@@ -26,6 +31,7 @@ var Shield = (function shieldWrapper() {
   }
 
   /**
+   * @method Shield_report
    * @param arg {Error || Object || String}
    * @constructor
    */
