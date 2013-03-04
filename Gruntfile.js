@@ -3,13 +3,10 @@ module.exports = function(grunt) {
   'use strict';
 
   grunt.initConfig({
-    lint: {
-      files: ['*.js']
-    },
-
+    // Simple config to re-run `grunt` any time a file is added, changed or deleted
     watch: {
-      files: ['<config:jasmine.specs>', '*js'],
-      tasks: 'jasmine'
+      files: '**/*',
+      tasks: ['default']
     },
 
     jshint: {
@@ -32,7 +29,6 @@ module.exports = function(grunt) {
         noarg: true,
         noempty: true,
         nonew: true,
-        onecase: true,
         quotmark: 'single',
         regexp: true,
         strict: true,
@@ -40,7 +36,13 @@ module.exports = function(grunt) {
         trailing: true,
         undef: true,
         unused: true,
-        white: false
+        white: false,
+        globals: {
+          ActiveXObject: false
+        }
+      },
+      gruntfile: {
+        src: 'Gruntfile.js'
       }
     },
 
@@ -54,11 +56,13 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.loadNpmTasks('grunt-jasmine-runner');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
   // Default task
-  grunt.registerTask('default', 'lint jasmine');
+  grunt.registerTask('default', ['jshint', 'jasmine', 'watch']);
 
   // Travis-CI task
-  grunt.registerTask('travis', 'lint');
+  grunt.registerTask('travis', ['jshint']);
 };
