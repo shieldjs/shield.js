@@ -1,0 +1,10 @@
+{
+    "name": "shield.js",
+    "description": "Javascript error and exception handling",
+    "version": "0.0.1",
+    "url": "https://github.com/shieldjs/shield.js",
+    "options": {
+        "exclude": "spec",
+        "outdir": "docs"
+    }
+}
