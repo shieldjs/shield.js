@@ -3,13 +3,15 @@ module.exports = function(grunt) {
   'use strict';
 
   grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
     // Simple config to re-run `grunt` any time a file is added, changed or deleted
     watch: {
-      files: '**/*',
+      files: ['Gruntfile.js', 'package.json', 'src/**/*.js', 'test/**/*.js'],
       tasks: ['default']
     },
 
     jshint: {
+      files: ['Gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
       options: {
         bitwise: true,
         boss: true,
@@ -54,6 +56,7 @@ module.exports = function(grunt) {
         output: 'junit/'
       }
     }
+
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
