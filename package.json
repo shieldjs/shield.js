@@ -1,20 +1,21 @@
 {
   "name": "shield.js",
   "version": "0.1.0",
-  "homepage": "https://github.com/shieldjs/shield.js",
   "url": "https://github.com/shieldjs/shield.js",
   "description": "Shows you how bad your JavaScript code is.",
   "devDependencies": {
     "grunt": "~0.4.0",
     "grunt-contrib-jshint": "~0.2.0",
     "grunt-contrib-jasmine": "~0.3.3",
-    "grunt-contrib-watch": "~0.3.1"
+    "grunt-contrib-watch": "~0.3.1",
+    "grunt-lodashbuilder": "~0.1.7",
+    "grunt-closure-compiler": "latest",
+    "historical-console": "latest",
+    "extend-function": "latest"
   },
   "scripts": {
     "test": "grunt travis --verbose"
   },
-
-
   "comment-on-yuidoc": "yuidoc has been buggy when I put it's json inside a 'yuidoc': key. I don't exactly like having these here but it works.",
   "logo": "http://cl.ly/image/1G113M0s1D2h/shield-logo-small.png",
   "options": {
