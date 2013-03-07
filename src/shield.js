@@ -1,36 +1,25 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
-
-/**
- * @method exceptionalException
- *
- * exceptionalException
- * You know, for something that should REALLY never occur
- */
-var exceptionalException = function exceptionalExceptionFn(message) {
-  alert('HOLY MOLY! Please email this error to support@' + location.host + ': \n\nSubject:Error\n' + message);
-};
-
-(function ShieldJS() {
+(function shieldJS() {
   'use strict';
 
   /**
   
-  Sheild, the main function, does a few things:
+  shield, the main function, does a few things:
   
   1. Wraps a callback in a try/catch block:
-     Sheild(function(){
+     shield(function(){
        //your program
      })();
   
   2. Optionally include a `console` param to use our historicalConsole
-     Shield(function(console){
+     shield(function(console){
        
      })();
      For documentation regarding keeping a console history, see https://github.com/devinrhode2/historicalConsole.js
   
   3. Modify global api functions so their callbacks are also wrapped in a try/catch block:
-     Shield('$');
-     Shield('$, $.fn.on, $.fn.ready')
+     shield('$');
+     shield('$, $.fn.on, $.fn.ready')
      Now errors in these callbacks will be caught:
      $(function(){})
      $('#foo').on('click', function(){})
@@ -41,23 +30,23 @@ var exceptionalException = function exceptionalExceptionFn(message) {
        //your function
      };
   
-     add Shield:
-     var func = Shield(function(){
-       //no need for a try/catch block now, Shield has it taken care of
+     add shield:
+     var func = shield(function(){
+       //no need for a try/catch block now, shield has it taken care of
      });
   
-  @module Shield
-  @main Shield
-  @class Shield
+  @module shield
+  @main shield
+  @class shield
   @static asdf
   @type Function
   @param {Mixed} apiFn A string like 
-  @param {String} [promises] Space or comma-space separated list of functions to Shield
+  @param {String} [promises] Space or comma-space separated list of functions to shield
   @return {Function} A function that will have all it's errors caught
-  @return {Function} A function that will have all exceptions sent to onuncaughtError (which Shield.js defines - so they are sent to Shield unless you Shield.unsubscribe(Shield.report) or re-define window.onuncaughtError
+  @return {Function} A function that will have all exceptions sent to onuncaughtError (which shield.js defines - so they are sent to shield unless you shield.unsubscribe(shield.report) or re-define window.onuncaughtError
   */
 
-  function Shield(apiFn, promises) {
+  function shield(apiFn, promises) {
     if (_.isString(apiFn)) {
       if (apiFn.indexOf(' ') > -1) {
         apiFn.replace(/\,/g, ''); //allow '$, $.fn.on, $.fn.ready'
@@ -66,7 +55,7 @@ var exceptionalException = function exceptionalExceptionFn(message) {
     }
     if (_.isArray(apiFn)) {
       _.each(apiFn, function(api){
-        Shield(api);
+        shield(api);
       });
       return;
     }
@@ -74,7 +63,7 @@ var exceptionalException = function exceptionalExceptionFn(message) {
       apiFn = null;//garbage collected
 
       //if function.length (number of listed parameters) is 1, and there are no args, then this is
-      //Shield(function(console){})()
+      //shield(function(console){})()
       //ie, prevFunc expects 1 arg (length) but received none when called
       if (prevFunc.length === 1 && args.length === 0) {
 
@@ -86,7 +75,7 @@ var exceptionalException = function exceptionalExceptionFn(message) {
           //historicalConsole takes in a function and returns one that will receive the first arg as the console.
           //The second arg is a unique identifier to use another scope's historical console object
           //options.url is probably a deent unique identifier.
-          //We could ask the user to name the app (Shield.options.appName('thing')
+          //We could ask the user to name the app (shield.options.appName('thing')
           return historicalConsole(prevFunc/*, options.url*/);
         } else {
           return prevFunc;
@@ -110,7 +99,7 @@ var exceptionalException = function exceptionalExceptionFn(message) {
           promises = promises.split(' ');
           var promise;
           while(promise = promises.pop()) {
-            ret[promise] = Shield(ret[promise]);
+            ret[promise] = shield(ret[promise]);
           }
         }
         return ret;
@@ -118,7 +107,7 @@ var exceptionalException = function exceptionalExceptionFn(message) {
     });
   }
 
-  function Shield_normalize(callback) {
+  function shield_normalize(callback) {
     if(callback == null) {
       // do synchronous normalization
       return {stack: []};
@@ -132,13 +121,13 @@ var exceptionalException = function exceptionalExceptionFn(message) {
   }
 
   /**
-   * @method Shield_report
+   * @method shield_report
    * @param arg {Error || Object || String}
    * @constructor
    */
-  function Shield_report(arg) {
+  function shield_report(/* arg */) {
     //If object or string AND it has no stack property, add one by doing .stack = (new Error('force-added stack')).stack
-    Shield.normalize(function(jsonErrorReport) {
+    shield.normalize(function(/* jsonErrorReport */) {
       //send to subscribers
       //if no subscribers.. then throw an error or alert?
       //If we were to throw in this situation, I would call that an exceptionalException, and call that function above
@@ -146,23 +135,23 @@ var exceptionalException = function exceptionalExceptionFn(message) {
   }
 
   /**
-   * Shield.noConflict: Export Shield out to another variable
-   * Example: myModule.Shield = Shield.noConflict();
+   * shield.noConflict: Export shield out to another variable
+   * Example: myModule.shield = shield.noConflict();
    */
-  var oldShield = window.Shield;
-  function Shield_noConflict() {
-    window.Shield = oldShield;
-    return Shield;
+  var oldShield = window.shield;
+  function shield_noConflict() {
+    window.shield = oldShield;
+    return shield;
   }
 
   //assiging one static object to the prototype instead of property by property is faster in V8
   //performance is the same in other browsers, except FF which is way faster than everyone else
   //and therefore doesn't matter as much. http://jsperf.com/props-or-proto-on-fns
-  Shield.prototype = {
-    report: Shield_report,
-    normalize: Shield_normalize,
-    noConflict: Shield_noConflict
+  shield.prototype = {
+    report: shield_report,
+    normalize: shield_normalize,
+    noConflict: shield_noConflict
   };
 
-  window.Shield = Shield;
+  window.shield = shield;
 })();
