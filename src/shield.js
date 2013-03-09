@@ -38,12 +38,13 @@
   @module shield
   @main shield
   @class shield
-  @static asdf
+  @static shield
   @type Function
   @param {Mixed} apiFn A string like 
   @param {String} [promises] Space or comma-space separated list of functions to shield
-  @return {Function} A function that will have all it's errors caught
-  @return {Function} A function that will have all exceptions sent to onuncaughtError (which shield.js defines - so they are sent to shield unless you shield.unsubscribe(shield.report) or re-define window.onuncaughtError
+  @return {Function} A function that will have all exceptions caught and sent to
+    onuncaughtError (which shield.js defines - so they are sent to shield unless
+    you shield.unsubscribe(shield.report) or re-define window.onuncaughtError
   */
 
   function shield(apiFn, promises) {
