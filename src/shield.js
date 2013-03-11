@@ -3,7 +3,7 @@ function wrapInTryCatch(fn) {
   return function() {
     try {
       var args = [].slice.call(arguments);
-      //setTimeout/setInterval in IE don't have an apply method
+      //setTimeout and setInterval in IE don't have an apply method
       return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
     } catch (e) {
       //probably window.onuncaughtException but maybe not. you can var over it
