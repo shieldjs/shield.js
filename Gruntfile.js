@@ -21,6 +21,33 @@ module.exports = function(grunt) {
     ' */\n';
   }
 
+  var customBuildMap = {
+    base: [], //just use base files
+    historicalConsole: ['node_modules/historical-console/historicalConsole.js']
+  };
+  var baseFiles = [
+    'lib/lodash.custom.js',
+    'node_modules/extend-function/extendFunction.js',
+    'src/Shield.js'
+  ];
+  var closureHash = {};
+  for (var build in customBuildMap) {
+    if (customBuildMap.hasOwnProperty(build)) {
+      closureHash[build] = {
+        js: baseFiles.concat(customBuildMap[build]),
+        jsOutputFile: 'dist/' + build + '.min.js',
+        maxBuffer: 500,
+        options: {
+          compilation_level: 'SIMPLE_OPTIMIZATIONS',
+          language_in: 'ECMASCRIPT3',
+          output_wrapper: banner(build) + '%output%',
+          source_map_format: 'V3', // || V1 || V2 || DEFAULT
+          create_source_map: 'dist/' + build + '.min.map'
+        }
+      };
+    }
+  }
+
   grunt.initConfig({
     pkg: pkg,
 
@@ -71,34 +98,7 @@ module.exports = function(grunt) {
       include: ['isArray', 'isString', 'isFunction', 'each']
     },
 
-    'closure-compiler': (function (map) {
-      var baseFiles = [
-        'lib/lodash.custom.js',
-        'node_modules/extend-function/extendFunction.js',
-        'src/Shield.js'
-      ];
-      var closureHash = {};
-      for (var build in map) {
-        if (map.hasOwnProperty(build)) {
-          closureHash[build] = {
-            js: baseFiles.concat(map[build]),
-            jsOutputFile: 'dist/' + build + '.min.js',
-            maxBuffer: 500,
-            options: {
-              compilation_level: 'SIMPLE_OPTIMIZATIONS',
-              language_in: 'ECMASCRIPT3',
-              output_wrapper: banner(build) + '%output%',
-              source_map_format: 'V3', // || V1 || V2 || DEFAULT
-              create_source_map: 'dist/' + build + '.min.map'
-            }
-          };
-        }
-      }
-      return closureHash;
-    })({
-      base: [], //just use base files
-      historicalConsole: ['node_modules/historical-console/historicalConsole.js']
-    }),
+    'closure-compiler': closureHash,
 
     jasmine: {
       src: '*.js',
