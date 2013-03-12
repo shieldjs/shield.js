@@ -4,49 +4,56 @@
 
   /**
   
-  shield, the main function, does a few things:
+  ## The main `shield` function does a few things:<br/>
   
-  1. Wraps a callback in a try/catch block:
-     shield(function(){
-       //your program
-     })();
-  
-  2. Optionally include a `console` param to use our historicalConsole
-     shield(function(console){
-       
-     })();
-     For documentation regarding keeping a console history, see https://github.com/devinrhode2/historicalConsole.js
-  
-  3. Modify global api functions so their callbacks are also wrapped in a try/catch block:
-     shield('$');
-     shield('$, $.fn.on, $.fn.ready')
-     Now errors in these callbacks will be caught:
-     $(function(){})
-     $('#foo').on('click', function(){})
-     $(document).ready(function(){})
-  
-  4. Use it for easier try/catch blocks. Instead of:
-     var func = function() {
-       //your function
-     };
-  
-     add shield:
-     var func = shield(function(){
-       //no need for a try/catch block now, shield has it taken care of
-     });
-  
-  @module shield
-  @main shield
-  @class shield
-  @static shield
-  @type Function
-  @param {Mixed} apiFn A string like 
-  @param {String} [promises] Space or comma-space separated list of functions to shield
-  @return {Function} A function that will have all exceptions caught and sent to
-    onuncaughtError (which shield.js defines - so they are sent to shield unless
-    you shield.unsubscribe(shield.report) or re-define window.onuncaughtError
-  */
+  1) Wraps a callback in a try/catch block:
 
+    shield(function(){
+      //your program
+    })();
+
+  2) Optionally include a `console` param to use our historicalConsole
+
+    shield(function(console){
+    })();
+
+  For documentation regarding keeping a console history, see
+  <a href="https://github.com/devinrhode2/historicalConsole.js">github.com/devinrhode2/historicalConsole.js</a>
+
+  <br>
+  3) Modify global api functions so their callbacks are also wrapped in a try/catch block:
+
+    shield('$');
+    shield('$, $.fn.on, $.fn.ready')
+    
+    //Now errors in these callbacks will be caught, and there's no need for a try/catch block:
+    $(function(){})
+    $('#foo').on('click', function(){})
+    $(document).ready(function(){})
+
+  4) Use it for easier try/catch blocks. Instead of:
+
+    var func = function() {
+      //your function
+    };
+
+    add shield:
+    var func = shield(function(){
+      //no need for a try/catch block now, shield has it taken care of
+    });
+
+##### You do not invoke this function with `new` (I think it's just a memory suck if you do)
+
+
+  @class shield
+  @constructor shield
+  @type Function
+  @param apiFn {String || Function} A string must represent a global function like `'$'`, or a space/comma-space seperated list like `'$, $.fn.ready'` <br>
+    Pass in a function, and it will be shieled and returned. `shield`'ing means this function and callbacks
+    passed as parameters to it will have all exceptions sent to onuncaughtError, or shield subscribers. (example 4)
+  @param {String} [promises] Space or comma-space separated list of promise functions to shield (like $.ajax().done)
+  @return {Function} A function that will have all uncaught exceptions sent to your shield.js subscribers, or onuncaughtException if you overwrote the function. You shield.unsubscribe(shield.report)
+  */
   function shield(apiFn, promises) {
     if (_.isString(apiFn)) {
       if (apiFn.indexOf(' ') > -1) {
@@ -108,7 +115,11 @@
     });
   }
 
-  function shield_normalize(callback) {
+  /**
+   * @method normalize
+   * @param error {Error} an
+   */
+  function shield_normalize(error, callback) {
     if(callback == null) {
       // do synchronous normalization
       return {stack: []};
@@ -122,7 +133,7 @@
   }
 
   /**
-   * @method shield_report
+   * @method report
    * @param arg {Error || Object || String}
    * @constructor
    */
@@ -136,8 +147,12 @@
   }
 
   /**
-   * shield.noConflict: Export shield out to another variable
-   * Example: myModule.shield = shield.noConflict();
+   * Export shield out to another variable, e.g., `myModule.shield = shield.noConflict();`
+   *
+   * @method noConflict
+   * @namespace shield
+   * @return {Function} the currently defined window.shield (now defined to the previous
+       window.shield, which may or may not be defined)
    */
   var oldShield = window.shield;
   function shield_noConflict() {
