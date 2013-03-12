@@ -1,4 +1,25 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
+function wrapInTryCatch(fn) {
+  return function() {
+    try {
+      var args = [].slice.call(arguments);
+      //setTimeout and setInterval in IE don't have an apply method
+      return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
+    } catch (e) {
+      //probably window.onuncaughtException but maybe not. you can var over it
+      if (typeof onuncaughtException !== 'undefined' && Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
+        onuncaughtException(e);
+      } else {
+        typeof console !== 'undefined' && console.warn && console.warn(
+          'You should define a window.onuncaughtException handler for exceptions, ' +
+          'or use a library like Sheild.js'
+        );
+        throw e;
+      }
+    }
+  };
+}
+
 (function shieldJS() {
   'use strict';
 
@@ -67,7 +88,7 @@
       });
       return;
     }
-    return extendFunction(apiFn, function(args, prevFunc) {
+    return wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
       apiFn = null;//garbage collected
 
       //if function.length (number of listed parameters) is 1, and there are no args, then this is
@@ -79,7 +100,7 @@
         var prevFnString = prevFunc.toString();
         var firstParen = prevFnString.indexOf('(');
         var secondParen = prevFnString.indexOf(')', firstParen);
-        if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1) {
+        if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1 && typeof historicalConsole !== 'undefined') {
           //historicalConsole takes in a function and returns one that will receive the first arg as the console.
           //The second arg is a unique identifier to use another scope's historical console object
           //options.url is probably a deent unique identifier.
@@ -112,7 +133,7 @@
         }
         return ret;
       }
-    });
+    }));
   }
 
   /**
