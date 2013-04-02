@@ -6,7 +6,7 @@ function wrapInTryCatch(fn) {
       //setTimeout and setInterval in IE don't have an apply method
       return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
     } catch (e) {
-      //probably window.onuncaughtException but maybe not. you can var over it
+      //probably window.onuncaughtException but maybe not. Feel free to var over it
       if (typeof onuncaughtException !== 'undefined' && Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
         onuncaughtException(e);
       } else {
