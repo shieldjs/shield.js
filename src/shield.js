@@ -11,8 +11,7 @@ function wrapInTryCatch(fn) {
         onuncaughtException(e);
       } else {
         typeof console !== 'undefined' && console.warn && console.warn(
-          'You should define a window.onuncaughtException handler for exceptions, ' +
-          'or use a library like Sheild.js'
+          'You should define a window.onuncaughtException handler for exceptions, SON'
         );
         throw e;
       }
@@ -135,60 +134,6 @@ function wrapInTryCatch(fn) {
       }
     }));
   }
-
-  /**
-   * @method normalize
-   * @param error {Error} an
-   */
-  function shield_normalize(error, callback) {
-    if(callback == null) {
-      // do synchronous normalization
-      return {stack: []};
-    }
-    // Do async things like remote fetching, etc
-    return callback({
-      stack: [],
-      url: location.href
-      //...
-    });
-  }
-
-  /**
-   * @method report
-   * @param arg {Error || Object || String}
-   * @constructor
-   */
-  function shield_report(/* arg */) {
-    //If object or string AND it has no stack property, add one by doing .stack = (new Error('force-added stack')).stack
-    shield.normalize(function(/* jsonErrorReport */) {
-      //send to subscribers
-      //if no subscribers.. then throw an error or alert?
-      //If we were to throw in this situation, I would call that an exceptionalException, and call that function above
-    });
-  }
-
-  /**
-   * Export shield out to another variable, e.g., `myModule.shield = shield.noConflict();`
-   *
-   * @method noConflict
-   * @namespace shield
-   * @return {Function} the currently defined window.shield (now defined to the previous
-       window.shield, which may or may not be defined)
-   */
-  var oldShield = window.shield;
-  function shield_noConflict() {
-    window.shield = oldShield;
-    return shield;
-  }
-
-  //assiging one static object to the prototype instead of property by property is faster in V8
-  //performance is the same in other browsers, except FF which is way faster than everyone else
-  //and therefore doesn't matter as much. http://jsperf.com/props-or-proto-on-fns
-  shield.prototype = {
-    report: shield_report,
-    normalize: shield_normalize,
-    noConflict: shield_noConflict
-  };
 
   window.shield = shield;
 })();
