@@ -2,7 +2,7 @@
 function wrapInTryCatch(fn) {
   return function() {
     try {
-      var args = [].slice.call(arguments);
+      var args = Array.prototype.slice.call(arguments);
       //setTimeout and setInterval in IE don't have an apply method
       return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
     } catch (e) {
