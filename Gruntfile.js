@@ -23,12 +23,15 @@ module.exports = function(grunt) {
 
   var customBuildMap = {
     base: [], //just use base files
-    historicalConsole: ['node_modules/historical-console/historicalConsole.js']
+    //no custom builds for now, I don't know how to remove files
+    /* historicalConsole: ['node_modules/historical-console/historicalConsole.js'] */
   };
   var baseFiles = [
     'lib/lodash.custom.js',
     'node_modules/extend-function/extendFunction.js',
-    'src/Shield.js'
+    'src/Shield.js',
+    'node_modules/historical-console/historicalConsole.js',
+    'src/shield.jquery.js'
   ];
   var closureHash = {};
   for (var build in customBuildMap) {

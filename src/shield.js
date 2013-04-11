@@ -8,7 +8,7 @@ function wrapInTryCatch(fn) {
     } catch (e) {
       //probably window.onuncaughtException but maybe not. Feel free to var over it
       if (typeof onuncaughtException !== 'undefined' && Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
-        onuncaughtException({stack: e.stack, message:e.message}, e);//pass in this object which can be JSON.stringify'd
+        onuncaughtException({stack: e.stack, message:e.message});//pass in this object which can be JSON.stringify'd
       } else {
         typeof console !== 'undefined' && console.warn && console.warn(
           'You should define an onuncaughtException handler for exceptions, SON'
