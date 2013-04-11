@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 
   var customBuildMap = {
     base: [], //just use base files
-    //no custom builds for now, I don't know how to remove files
+    //no custom builds for now, I don't know how to subtract files
     /* historicalConsole: ['node_modules/historical-console/historicalConsole.js'] */
   };
   var baseFiles = [
