@@ -9,9 +9,7 @@
     "grunt-contrib-jasmine": "~0.3.3",
     "grunt-contrib-watch": "~0.3.1",
     "grunt-lodashbuilder": "~0.1.7",
-    "grunt-closure-compiler": "latest",
-    "historical-console": "latest",
-    "extend-function": "latest"
+    "grunt-closure-compiler": "latest"
   },
   "scripts": {
     "test": "grunt travis --verbose"
@@ -24,5 +22,9 @@
       "./src"
     ],
     "outdir": "docs"
+  },
+  "dependencies": {
+    "historical-console": "git://github.com/devinrhode2/historicalConsole.js.git",
+    "extend-function": "git://github.com/devinrhode2/extendFunction.js.git"
   }
 }

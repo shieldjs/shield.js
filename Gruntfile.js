@@ -23,12 +23,12 @@ module.exports = function(grunt) {
 
   var customBuildMap = {
     base: [], //just use base files
-    //no custom builds for now, I don't know how to subtract files
+    //no custom builds for now, need to implement a way to subtract files from the default base build
     /* historicalConsole: ['node_modules/historical-console/historicalConsole.js'] */
   };
   var baseFiles = [
     'lib/lodash.custom.js',
-    'node_modules/extend-function/extendFunction.js',
+    'components/extend-function/extendFunction.js',
     'src/Shield.js',
     'node_modules/historical-console/historicalConsole.js',
     'src/shield.jquery.js'

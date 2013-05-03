@@ -1,24 +1,4 @@
-/*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
-function wrapInTryCatch(fn) {
-  return function() {
-    try {
-      var args = Array.prototype.slice.call(arguments);
-      //setTimeout and setInterval in IE don't have an apply method
-      return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
-    } catch (e) {
-      //probably window.onuncaughtException but maybe not. Feel free to var over it
-      if (typeof onuncaughtException !== 'undefined' && Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
-        onuncaughtException({stack: e.stack, message:e.message});//pass in this object which can be JSON.stringify'd
-      } else {
-        typeof console !== 'undefined' && console.warn && console.warn(
-          'You should define an onuncaughtException handler for exceptions, SON'
-        );
-        throw e;
-      }
-    }
-  };
-}
-
+/*global _, extendFunction, historicalConsole, wrapInTryCatch, onuncaughtException*/
 /**
 
 ## The main `shield` function does a few things:<br/>
@@ -84,7 +64,7 @@ function shield(apiFn, promises) {
     });
     return;
   }
-  return wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
+  return shield.wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
     apiFn = null;//garbage collected
 
     //if function.length (number of listed parameters) is 1, and there are no args, then this is
@@ -131,3 +111,28 @@ function shield(apiFn, promises) {
     }
   }));
 }
+
+historicalConsole(function(console){
+  window.console = console;
+});
+
+
+shield.wrapInTryCatch = function shield_wrapInTryCatch(fn) {
+  return function() {
+    try {
+      var args = Array.prototype.slice.call(arguments);
+      //setTimeout and setInterval in IE don't have an apply method
+      return ( fn.apply ? fn.apply(this, args) : fn(args[0], args[1]) );
+    } catch (e) {
+      //probably window.onuncaughtException but maybe not. Feel free to var over it
+      if (typeof onuncaughtException !== 'undefined' && Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
+        onuncaughtException({stack: e.stack, message:e.message});//pass in this object which can be JSON.stringify'd
+      } else {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('You should define an onuncaughtException handler for exceptions, SON. ');
+        }
+        throw e;
+      }
+    }
+  };
+};
