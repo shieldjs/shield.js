@@ -10,3 +10,6 @@ sudo npm install -g yuidocjs
 make
 open http://localhost:2000/
 ```
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devinrhode2/shield.js/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
