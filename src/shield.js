@@ -1,89 +1,57 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
+
+
+
 function exceptionalException(message) {
   'use strict';
 
-
-  ee.stringifyHash || (function(){
-    function stringifyHash(hash) {
-      var result = '';
-      for (var key in hash) {
-        result += key + ': ' + hash[key];
-      }
-      return result;
-    }
-    ee.stringifyHash = stringifyHash;
-  )();
-
-  /*may use less memory:
+  // alias:
+  var ee = exceptionalException;
+  ee.confirmDialogMessage || (ee.confirmDialogMessage = 'We were not able to report an error to our servers. Please email us so we can fix it.');
+  ee.domain || (
+    ee.domain = location.hostname.split('.'),
+    ee.domain = '@' + ee.domain[ee.domain.length - 2] + '.' + ee.domain[ee.domain.length - 1]
+  );
+  ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
+  ee.mailtoParams.body    || (ee.mailtoParams.body    = 'I found X javascript errors, they are listed below:');
   function stringifyHash(hash) {
     var result = '';
     for (var key in hash) {
-      if (hash.hasOwnProperty(key)) {
-        result += key + ': ' + hash[key] + '\n';
-      }
+      result += key + ': ' + hash[key];
     }
     return result;
   }
   ee.stringifyHash || (ee.stringifyHash = stringifyHash);
 
-  Interesting test:
-    is this:
-
-      function declaration(arg) {
-        return arg + 'a real function';
-      }
-      'already initialized' || 'OR stub. not relevent or evaluated.';
-
-    faster than this:
-
-      'already initialized' || 'OR stub. not relevent or evaluated';
-  */
-
-  // alias:
-  var ee = exceptionalException;
 
   if (ee.emailErrors !== false) {
 
-    if (!_.isString(message)) {
-
-      //ensure stack property is computed
-      message.stack || 'what';
-      message = ee.stringifyHash(message); //
-    }
-
-    ee.confirmDialogMessage || (
-      ee.confirmDialogMessage = 'We were not able to report an error to our servers. Please email us so we can fix it.'
-    );
     ee.emailErrors = confirm(ee.confirmDialogMessage);
 
     if (ee.emailErrors) {
-      ee.domain || (
-        ee.domain = location.hostname.split('.'),
-        ee.domain = '@' + ee.domain[ee.domain.length - 2] + '.' + ee.domain[ee.domain.length - 1]
-      );
 
-      if (ee.mailtoParams.subject === undefined) {
-        ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one';
+      if (!_.isString(message)) {
+
+        //ensure stack property is computed
+        message.stack;
+        message = ee.stringifyHash(message); //
       }
-      if (ee.mailtoParams.body === undefined) {
-        ee.mailtoParams.body = 'We found some javascript errors, they are listed below:';
-      }
+
       ee.mailtoParams.subject && (ee.mailtoParams.body += '\n\n' + message) || (
-        ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one',
         ee.mailtoParams.body = ''
       );
       //que of sorts? -setTimeout without runloop, or at very end of runloop stuff..?
 
-      location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' + (function(){
-        for (var param in ee.mailtoParams) {
-          if (ee.mailtoParams.hasOwnProperty(param)) {
 
-          }
-        }
-      })();
+      //wait 200 milliseconds in case any other exceptionalExceptions come in
+      setTimeout(function(){
+        location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' +
+
+      }, 200);
     }
   }
 }
+
 function wrapInTryCatch(func) {
   function wrappedFunction() {
     try {
