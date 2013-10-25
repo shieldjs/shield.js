@@ -21,6 +21,39 @@ module.exports = function(grunt) {
     ' */\n';
   }
 
+<<<<<<< HEAD
+=======
+  var customBuildMap = {
+    base: [], //just use base files
+    //no custom builds for now, need to implement a way to subtract files from the default base build
+    /* historicalConsole: ['node_modules/historical-console/historicalConsole.js'] */
+  };
+  var baseFiles = [
+    'lib/lodash.custom.js',
+    'components/extend-function/extendFunction.js',
+    'src/Shield.js',
+    'node_modules/historical-console/historicalConsole.js',
+    'src/shield.jquery.js'
+  ];
+  var closureHash = {};
+  for (var build in customBuildMap) {
+    if (customBuildMap.hasOwnProperty(build)) {
+      closureHash[build] = {
+        js: baseFiles.concat(customBuildMap[build]),
+        jsOutputFile: 'dist/' + build + '.min.js',
+        maxBuffer: 500,
+        options: {
+          compilation_level: 'SIMPLE_OPTIMIZATIONS',
+          language_in: 'ECMASCRIPT3',
+          output_wrapper: banner(build) + '%output%',
+          source_map_format: 'V3', // || V1 || V2 || DEFAULT
+          create_source_map: 'dist/' + build + '.min.map'
+        }
+      };
+    }
+  }
+
+>>>>>>> 21a5108e1a01b5dfa4b000c9370370f54871d6a6
   grunt.initConfig({
     pkg: pkg,
 
@@ -71,6 +104,7 @@ module.exports = function(grunt) {
       include: ['isArray', 'isString', 'isFunction', 'each']
     },
 
+<<<<<<< HEAD
     'closure-compiler': (function (map) {
       var baseFiles = [
         'lib/lodash.custom.js',
@@ -99,6 +133,9 @@ module.exports = function(grunt) {
       base: [], //just use base files
       historicalConsole: ['node_modules/historical-console/historicalConsole.js']
     }),
+=======
+    'closure-compiler': closureHash,
+>>>>>>> 21a5108e1a01b5dfa4b000c9370370f54871d6a6
 
     jasmine: {
       src: '*.js',

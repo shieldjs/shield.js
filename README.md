@@ -10,3 +10,8 @@ sudo npm install -g yuidocjs
 make
 open http://localhost:2000/
 ```
+
+//focus is ease of use. for crazy efficiency, just use a try/catch block and pass exceptions to onuncaughtException
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devinrhode2/shield.js/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+

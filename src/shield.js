@@ -1,12 +1,55 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
-//focus is ease of use. for crazy efficiency, just use a try/catch block and pass exceptions to onuncaughtException
 function exceptionalException(message) {
   'use strict';
+
+
+  ee.stringifyHash || (function(){
+    function stringifyHash(hash) {
+      var result = '';
+      for (var key in hash) {
+        result += key + ': ' + hash[key];
+      }
+      return result;
+    }
+    ee.stringifyHash = stringifyHash;
+  )();
+
+  /*may use less memory:
+  function stringifyHash(hash) {
+    var result = '';
+    for (var key in hash) {
+      if (hash.hasOwnProperty(key)) {
+        result += key + ': ' + hash[key] + '\n';
+      }
+    }
+    return result;
+  }
+  ee.stringifyHash || (ee.stringifyHash = stringifyHash);
+
+  Interesting test:
+    is this:
+
+      function declaration(arg) {
+        return arg + 'a real function';
+      }
+      'already initialized' || 'OR stub. not relevent or evaluated.';
+
+    faster than this:
+
+      'already initialized' || 'OR stub. not relevent or evaluated';
+  */
 
   // alias:
   var ee = exceptionalException;
 
   if (ee.emailErrors !== false) {
+
+    if (!_.isString(message)) {
+
+      //ensure stack property is computed
+      message.stack || 'what';
+      message = ee.stringifyHash(message); //
+    }
 
     ee.confirmDialogMessage || (
       ee.confirmDialogMessage = 'We were not able to report an error to our servers. Please email us so we can fix it.'
@@ -19,27 +62,32 @@ function exceptionalException(message) {
         ee.domain = '@' + ee.domain[ee.domain.length - 2] + '.' + ee.domain[ee.domain.length - 1]
       );
 
-      ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
+      if (ee.mailtoParams.subject === undefined) {
+        ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one';
+      }
+      if (ee.mailtoParams.body === undefined) {
+        ee.mailtoParams.body = 'We found some javascript errors, they are listed below:';
+      }
+      ee.mailtoParams.subject && (ee.mailtoParams.body += '\n\n' + message) || (
+        ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one',
+        ee.mailtoParams.body = ''
+      );
+      //que of sorts? -setTimeout without runloop, or at very end of runloop stuff..?
 
-      location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' + (function(mailtoParams){
-
-        for (var param in mailtoParams) {
-          if (mailtoParams.hasOwnProperty(param)) {
+      location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' + (function(){
+        for (var param in ee.mailtoParams) {
+          if (ee.mailtoParams.hasOwnProperty(param)) {
 
           }
         }
-      })({
-        subject: 'Automated error report failed, here\'s a manual one',
-        body: ''
-      });
-      //que of sorts? -setTimeout without runloop, or at very end of runloop stuff..?
+      })();
     }
   }
 }
-function wrapInTryCatch(userFunction) {
+function wrapInTryCatch(func) {
   function wrappedFunction() {
     try {
-      return userFunction.apply(this, Array.prototype.slice.call(arguments) );
+      return func.apply(this, Array.prototype.slice.call(arguments) );
     } catch (generalUncaughtException) { // base try catch block.
 
       // in the event of an uncaught exception, try to send the exception to onuncaughtException
@@ -71,28 +119,6 @@ function wrapInTryCatch(userFunction) {
 
       } // for catch exceptionCallingOnUncaughtException
     } // for catch generalUncaughtException
-
-
-        if (typeof onuncaughtException !== 'undefined' &&
-           Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
-
-          // apparently `uncaughtException` is defined and is a function. We have an exceptionalException.
-          exceptionalException(e2);
-        } else {
-        }
-      }
-
-      if (typeof onuncaughtException !== 'undefined' &&
-          Object.prototype.toString.call(onuncaughtException) == '[object Function]') {
-        onuncaughtException(e);
-      } else {
-        if (typeof console !== 'undefined' && console.warn) {
-          console.warn('You should define an onuncaughtException handler for exceptions, SON. ');
-        }
-        throw e;
-      }
-
-    }
   }
   return wrappedFunction;
 }
@@ -241,16 +267,10 @@ var func = shield(function(){
    * @param error {Error} an
    */
   function shield_normalize(error, callback) {
-    if(callback == null) {
+    if (callback == null) {
       // do synchronous normalization
       return {stack: []};
     }
-    // Do async things like remote fetching, etc
-    return callback({
-      stack: [],
-      url: location.href
-      //...
-    });
   }
 
   /**
@@ -265,7 +285,10 @@ var func = shield(function(){
       //if no subscribers.. then throw an error or alert?
       //If we were to throw in this situation, I would call that an exceptionalException, and call that function above
     });
+    return;
   }
+  return shield.wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
+    apiFn = null;//garbage collected
 
   /**
    * Export shield out to another variable, e.g., `myModule.shield = shield.noConflict();`
