@@ -42,12 +42,13 @@ function exceptionalException(message) {
       );
       //que of sorts? -setTimeout without runloop, or at very end of runloop stuff..?
 
+      location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' + (function(){
+        for (var param in ee.mailtoParams) {
+          if (ee.mailtoParams.hasOwnProperty(param)) {
 
-      //wait 200 milliseconds in case any other exceptionalExceptions come in
-      setTimeout(function(){
-        location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' +
-
-      }, 200);
+          }
+        }
+      })();
     }
   }
 }
