@@ -1,19 +1,22 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
 
-
-
-function exceptionalException(message) {
+// exceptionalException doesn't need to be part of stack traces, so
+// var expr = function works instead of function declarations(){}
+var exceptionalException = function(message) {
   'use strict';
 
   // alias:
   var ee = exceptionalException;
-  ee.confirmDialogMessage || (ee.confirmDialogMessage = 'We were not able to report an error to our servers. Please email us so we can fix it.');
+  ee.confirmDialogMessage || (ee.confirmDialogMessage = 'Email error? \n\nWe had a serious issue and were not able to automatically report an error. Click "ok" to send an email about the error so we can fix it.');
   ee.domain || (
     ee.domain = location.hostname.split('.'),
     ee.domain = '@' + ee.domain[ee.domain.length - 2] + '.' + ee.domain[ee.domain.length - 1]
   );
+  ee.mailtoParams || (ee.mailtoParams = {});
   ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
-  ee.mailtoParams.body    || (ee.mailtoParams.body    = 'I found X javascript errors, they are listed below:');
+  ee.mailtoParams.body    || (ee.mailtoParams.body    = 'I found some javascript errors, they are listed below:\n\n');
+
+  ee.stringifyHash || (ee.stringifyHash = stringifyHash);
   function stringifyHash(hash) {
     var result = '';
     for (var key in hash) {
@@ -21,48 +24,65 @@ function exceptionalException(message) {
     }
     return result;
   }
-  ee.stringifyHash || (ee.stringifyHash = stringifyHash);
 
+  var receivedErrorMessages = {
+    length: 0
+  };
 
-  if (ee.emailErrors !== false) {
-
-    ee.emailErrors = confirm(ee.confirmDialogMessage);
+  exceptionalException = function(message) {
+    if (ee.emailErrors !== false) {
+      ee.emailErrors = confirm(ee.confirmDialogMessage);
+    }
 
     if (ee.emailErrors) {
 
       if (!_.isString(message)) {
-
         //ensure stack property is computed
         message.stack;
         message = ee.stringifyHash(message); //
       }
 
-      ee.mailtoParams.subject && (ee.mailtoParams.body += '\n\n' + message) || (
-        ee.mailtoParams.body = ''
-      );
-      //que of sorts? -setTimeout without runloop, or at very end of runloop stuff..?
+      if (receivedErrorMessages[message]) {
+        return 'already received this error message';
+      } else {
 
-      location.href = 'mailto:unrecordedJavaScriptError' + ee.domain + ',support@' + ee.domain + '?' + (function(){
+        ee.mailtoParams.subject && (ee.mailtoParams.body += '\n\n' + message) || (
+          ee.mailtoParams.body = ''
+        );
+
+        //re-use message variable under alias
+        var finalUrl = message;
+
         for (var param in ee.mailtoParams) {
           if (ee.mailtoParams.hasOwnProperty(param)) {
-
+            //finalUrl =
           }
         }
-      })();
+        finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
+        //window.open arguments taken from twitters tweet button
+        if (!window.open(finalUrl, null, "scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240")) {
+          //hopefully the window.open works. If it doesn't, and we synchronously received another error
+          location.href = finalUrl;
+          //if reported errors is the same from when we being the timer to when we end the timer,
+        }
+      }
     }
-  }
-}
+
+  };
+  return exceptionalException(message); //just don't need to do .apply here.
+};
 
 function wrapInTryCatch(func) {
   function wrappedFunction() {
     try {
       return func.apply(this, Array.prototype.slice.call(arguments) );
-    } catch (generalUncaughtException) { // base try catch block.
+    } catch (uncaughtException) {
 
       // in the event of an uncaught exception, try to send the exception to onuncaughtException
       try {
-        onuncaughtException(generalUncaughtException);
+        onuncaughtException(uncaughtException);
 
+        // I use this gnarly try-catch structure instead of several if checks for efficiency
       } catch (exceptionCallingOnUncaughtException) {
         // however, if there's a problem with THAT........
 
@@ -87,7 +107,7 @@ function wrapInTryCatch(func) {
         }
 
       } // for catch exceptionCallingOnUncaughtException
-    } // for catch generalUncaughtException
+    } // for catch uncaughtException
   }
   return wrappedFunction;
 }
