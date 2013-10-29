@@ -2,6 +2,24 @@
 
 // exceptionalException doesn't need to be part of stack traces, so
 // var expr = function works instead of a function declaration(){}
+/**
+ * exexceptionalException
+ *
+ * @type function
+ * @description
+ *   An exceptionalException is when all hell breaks loose and nothing will work.
+ *   In this case will will prompt the user with the message ee.confirmDialogMessage,
+ *   which is defined in the 3rd statement in this funciton.
+ *   If the user agrees to this message by hitting OK, then a mailto link
+ *   will be opened with the body= the javascript stack traces.
+ * @example
+ *    // Attempt to perform basic mission critical tasks
+ *    try {
+ *      loadScript('jquery')
+ *    } catch (e) {
+ *      exceptionalException('failed to load jQuery.')
+ *    }
+ */
 var exceptionalException = function(message) {
   'use strict';
 
@@ -22,17 +40,17 @@ var exceptionalException = function(message) {
   ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
   ee.mailtoParams.body    || (ee.mailtoParams.body    = 'I found some javascript errors, they are listed below:\n\n');
 
-  ee.stringifyHash || (ee.stringifyHash = stringifyHash);
+  ee.stringifyHash || (ee.stringifyHash = stringifyHash); //this works via function hoisting. function declarations(){} get "hoisted" and they are defined from the very first line of javascript
   function stringifyHash(hash) {
     var result = '';
     for (var key in hash) {
-      result += key + ': ' + hash[key];
+      result += key + ':\n  ' + hash[key];
     }
     return result;
   }
 
   var receivedErrorMessages = {};
-  var lastReceivedMessage = message;
+  var lastMessageReceived = '';
 
   //start!
   //first thing we want to do is ask the user if they even want to email errors.
@@ -44,11 +62,13 @@ var exceptionalException = function(message) {
     //check if the user has approved emailing errors
     if (!ee.emailErrors) return 'User does not want to email errors.';
 
+    console.log('exceptionalException received:', message);
+
     //make sure the message is a string
     if (!_.isString(message)) {
       //ensure stack property is computed
       message.stack;
-      message = ee.stringifyHash(message); //
+      message = ee.stringifyHash(message);
     }
 
     //Add the message to the email body.
@@ -57,31 +77,31 @@ var exceptionalException = function(message) {
     //mark the message as received.
     if (receivedErrorMessages[message]) return 'already received this error message';
     receivedErrorMessages[message] = true;
-    lastReceivedMessage = message;
+    lastMessageReceived = message;
 
+    //get a snapshot of the lastMessageReceived at the start of the timeout with a closure
     (function(lastMessageAtStartOfTimeout){
       setTimeout(function(){
-        if (lastMessageAtStartOfTimeout === lastReceivedMessage) {
+        //if lastMessageReceived has changed since the start of the timeout.. bail
+        if (lastMessageReceived !== lastMessageAtStartOfTimeout) return;
 
-          //re-use message variable under alias
-          var finalUrl = message = '';
+        //re-use message variable under alias
+        var finalUrl = message = '';
 
-          for (var param in ee.mailtoParams) {
-            if (ee.mailtoParams.hasOwnProperty(param)) {
-              finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
-            }
-          }
-          finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
-
-          //window.open arguments taken from twitters tweet button
-          if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
-            //hopefully the window.open works. If it doesn't, and we synchronously received another error
-            location.href = finalUrl;
-            //if reported errors is the same from when we being the timer to when we end the timer,
+        for (var param in ee.mailtoParams) {
+          if (ee.mailtoParams.hasOwnProperty(param)) {
+            finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
           }
         }
+        finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
+
+        // Now we will attempt to load the mailto link via popup, but if that fails we will just do a redirect to compose the email
+        if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
+          //window.open arguments taken from twitters tweet button
+          location.href = finalUrl;
+        }
       }, 100);
-    })(lastReceivedMessage);
+    })(lastMessageReceived);
   };
   return exceptionalException(message); //just don't need to do .apply here.
 };
