@@ -86,14 +86,14 @@ var exceptionalException = function(message) {
         if (lastMessageReceived !== lastMessageAtStartOfTimeout) return;
 
         //re-use message variable under alias
-        var finalUrl = message = '';
+        var finalUrl = message = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?';
 
+        //mailtoParams needs to be turned into a querystring parameters and appended to finalUrl
         for (var param in ee.mailtoParams) {
           if (ee.mailtoParams.hasOwnProperty(param)) {
             finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
           }
         }
-        finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
 
         // Now we will attempt to load the mailto link via popup, but if that fails we will just do a redirect to compose the email
         if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
