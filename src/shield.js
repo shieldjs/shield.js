@@ -25,14 +25,15 @@ var exceptionalException = function(message) {
     return result;
   }
 
-  var receivedErrorMessages = {
-    length: 0
-  };
+  var receivedErrorMessages = {};
+  var lastReceivedMessage = message;
 
   exceptionalException = function(message) {
     if (ee.emailErrors !== false) {
       ee.emailErrors = confirm(ee.confirmDialogMessage);
     }
+
+    if (receivedErrorMessages[message]) return 'already received this error message';
 
     if (ee.emailErrors) {
 
@@ -42,32 +43,34 @@ var exceptionalException = function(message) {
         message = ee.stringifyHash(message); //
       }
 
-      if (receivedErrorMessages[message]) {
-        return 'already received this error message';
-      } else {
+      receivedErrorMessages[message] = true;
+      lastReceivedMessage = message;
+      ee.mailtoParams.body += '\n\n' + message;
 
-        ee.mailtoParams.subject && (ee.mailtoParams.body += '\n\n' + message) || (
-          ee.mailtoParams.body = ''
-        );
+      (function(lastMessageAtStartOfTimeout){
+        setTimeout(function(){
+          if (lastMessageAtStartOfTimeout === lastReceivedMessage) {
 
-        //re-use message variable under alias
-        var finalUrl = message;
+            //re-use message variable under alias
+            var finalUrl = message;
 
-        for (var param in ee.mailtoParams) {
-          if (ee.mailtoParams.hasOwnProperty(param)) {
-            //finalUrl =
+            for (var param in ee.mailtoParams) {
+              if (ee.mailtoParams.hasOwnProperty(param)) {
+                finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
+              }
+            }
+            finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
+
+            //window.open arguments taken from twitters tweet button
+            if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
+              //hopefully the window.open works. If it doesn't, and we synchronously received another error
+              location.href = finalUrl;
+              //if reported errors is the same from when we being the timer to when we end the timer,
+            }
           }
-        }
-        finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
-        //window.open arguments taken from twitters tweet button
-        if (!window.open(finalUrl, null, "scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240")) {
-          //hopefully the window.open works. If it doesn't, and we synchronously received another error
-          location.href = finalUrl;
-          //if reported errors is the same from when we being the timer to when we end the timer,
-        }
-      }
+        }, 100);
+      })(lastReceivedMessage);
     }
-
   };
   return exceptionalException(message); //just don't need to do .apply here.
 };
