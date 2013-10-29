@@ -1,16 +1,22 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
 
 // exceptionalException doesn't need to be part of stack traces, so
-// var expr = function works instead of function declarations(){}
+// var expr = function works instead of a function declaration(){}
 var exceptionalException = function(message) {
   'use strict';
 
   // alias:
   var ee = exceptionalException;
-  ee.confirmDialogMessage || (ee.confirmDialogMessage = 'Email error? \n\nWe had a serious issue and were not able to automatically report an error. Click "ok" to send an email about the error so we can fix it.');
+  ee.confirmDialogMessage || (
+    ee.confirmDialogMessage =
+      'Email error? \n\nWe had a serious issue and were not able ' +
+      'to automatically report an error. Click "ok" to send an email ' +
+      'about the error so we can fix it.\n\nThanks!'
+  );
   ee.domain || (
     ee.domain = location.hostname.split('.'),
-    ee.domain = '@' + ee.domain[ee.domain.length - 2] + '.' + ee.domain[ee.domain.length - 1]
+    ee.domain = ee.domain[ee.domain.length - 2] + '.' +
+                ee.domain[ee.domain.length - 1]
   );
   ee.mailtoParams || (ee.mailtoParams = {});
   ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
@@ -28,49 +34,54 @@ var exceptionalException = function(message) {
   var receivedErrorMessages = {};
   var lastReceivedMessage = message;
 
+  //start!
+  //first thing we want to do is ask the user if they even want to email errors.
+  ee.emailErrors = confirm(ee.confirmDialogMessage);
+
+  //now that we have our initialization done and state variables defined,
+  //we define the core function:
   exceptionalException = function(message) {
-    if (ee.emailErrors !== false) {
-      ee.emailErrors = confirm(ee.confirmDialogMessage);
+    //check if the user has approved emailing errors
+    if (!ee.emailErrors) return 'User does not want to email errors.';
+
+    //make sure the message is a string
+    if (!_.isString(message)) {
+      //ensure stack property is computed
+      message.stack;
+      message = ee.stringifyHash(message); //
     }
 
+    //Add the message to the email body.
+    ee.mailtoParams.body += '\n\n' + message;
+
+    //mark the message as received.
     if (receivedErrorMessages[message]) return 'already received this error message';
+    receivedErrorMessages[message] = true;
+    lastReceivedMessage = message;
 
-    if (ee.emailErrors) {
+    (function(lastMessageAtStartOfTimeout){
+      setTimeout(function(){
+        if (lastMessageAtStartOfTimeout === lastReceivedMessage) {
 
-      if (!_.isString(message)) {
-        //ensure stack property is computed
-        message.stack;
-        message = ee.stringifyHash(message); //
-      }
+          //re-use message variable under alias
+          var finalUrl = message = '';
 
-      receivedErrorMessages[message] = true;
-      lastReceivedMessage = message;
-      ee.mailtoParams.body += '\n\n' + message;
-
-      (function(lastMessageAtStartOfTimeout){
-        setTimeout(function(){
-          if (lastMessageAtStartOfTimeout === lastReceivedMessage) {
-
-            //re-use message variable under alias
-            var finalUrl = message;
-
-            for (var param in ee.mailtoParams) {
-              if (ee.mailtoParams.hasOwnProperty(param)) {
-                finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
-              }
-            }
-            finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
-
-            //window.open arguments taken from twitters tweet button
-            if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
-              //hopefully the window.open works. If it doesn't, and we synchronously received another error
-              location.href = finalUrl;
-              //if reported errors is the same from when we being the timer to when we end the timer,
+          for (var param in ee.mailtoParams) {
+            if (ee.mailtoParams.hasOwnProperty(param)) {
+              finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
             }
           }
-        }, 100);
-      })(lastReceivedMessage);
-    }
+          finalUrl = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?' + finalUrl;
+
+          //window.open arguments taken from twitters tweet button
+          if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
+            //hopefully the window.open works. If it doesn't, and we synchronously received another error
+            location.href = finalUrl;
+            //if reported errors is the same from when we being the timer to when we end the timer,
+          }
+        }
+      }, 100);
+    })(lastReceivedMessage);
   };
   return exceptionalException(message); //just don't need to do .apply here.
 };
