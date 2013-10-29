@@ -44,7 +44,7 @@ var exceptionalException = function(message) {
   function stringifyHash(hash) {
     var result = '';
     for (var key in hash) {
-      result += key + ':\n  ' + hash[key];
+      result += key + ':\n  ' + hash[key] + '\n\n';
     }
     return result;
   }
@@ -79,7 +79,7 @@ var exceptionalException = function(message) {
     receivedErrorMessages[message] = true;
     lastMessageReceived = message;
 
-    //get a snapshot of the lastMessageReceived at the start of the timeout with a closure
+    //get a snapshot of the lastMessageReceived at the start of the timeout by using a closure
     (function(lastMessageAtStartOfTimeout){
       setTimeout(function(){
         //if lastMessageReceived has changed since the start of the timeout.. bail
