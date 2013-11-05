@@ -1,4 +1,4 @@
-/*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
+/*global _:false, extendFunction: false, historicalConsole: false*/
 
 
 (function shieldJS(global) {
@@ -154,6 +154,54 @@ var func = shield(function(){
     return shield;
   }
 
+
+  function shield_wrap(func) {
+    // Define a function that simply returns what func returns, and forwards the arguments
+    function wrappedFunction() {
+      try {
+        /**
+        If someone does new SomeWrappedFunction(),
+        the value of this is an instanceof wrappedFunction.
+
+        But thanks to the line at the bottom of wrapInTryCatch,
+        wrappedFunction is an instanceof the original function,
+
+        `this` gets all the right properties, but a resulting objects properties may not
+        be it's *own* properties.. well this check shows there are zero side effects:
+
+        function printThis() {
+          this.prop = 'this.prop value!';
+          console.log('this:', this);
+          console.log('this.proto:', this.prototype);
+        }
+        printThis.prototype.protoProp = 'protoProp value!';
+        function printProperties(obj) {
+          for (var p in obj) {
+            console.log(
+              (obj.hasOwnProperty(p) ? '... OWNED ' : 'NOT OWNED ') + p + ': ' + obj[p]
+            );
+          }
+        }
+        printThis();
+        printProperties(new printThis());
+        printThis = wrapInTryCatch(printThis);
+        printThis();
+        printProperties(new printThis());
+        */
+        return func.apply(this, Array.prototype.slice.call(arguments) );
+      } catch (uncaughtException) {
+        fireUncaughtExceptionEvent(uncaughtException);
+      }
+    }
+    //preserve function.length since wrappedFunction doesn't list arguments!
+    wrappedFunction.length = func.length;
+    //maintain prototype chain, but not necessarily extend. Extending would be like new Error I think.
+    wrappedFunction.prototype = func.prototype;
+    //I'm pretty sure if someone does `new wrapInTryCatch(..)` nothing different happens at all.
+    return wrappedFunction;
+  }
+
+  shield.wrap = shield_wrap;
   shield.report = shield_report;
   shield.noConflict = shield_noConflict;
 
