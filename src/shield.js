@@ -1,150 +1,5 @@
 /*global _:false, extendFunction: false, historicalConsole: false, wrapInTryCatch: false*/
 
-// exceptionalException doesn't need to be part of stack traces, so
-// var expr = function works instead of a function declaration(){}
-/**
- * exexceptionalException
- *
- * @type function
- * @description
- *   An exceptionalException is when all hell breaks loose and nothing will work.
- *   In this case will will prompt the user with the message ee.confirmDialogMessage,
- *   which is defined in the 3rd statement in this funciton.
- *   If the user agrees to this message by hitting OK, then a mailto link
- *   will be opened with the body= the javascript stack traces.
- * @example
- *    // Attempt to perform basic mission critical tasks
- *    try {
- *      loadScript('jquery')
- *    } catch (e) {
- *      exceptionalException('failed to load jQuery.')
- *    }
- */
-var exceptionalException = function(message) {
-  'use strict';
-
-  // alias:
-  var ee = exceptionalException;
-  ee.confirmDialogMessage || (
-    ee.confirmDialogMessage =
-      'Email error? \n\nWe had a serious issue and were not able ' +
-      'to automatically report an error. Click "ok" to send an email ' +
-      'about the error so we can fix it.\n\nThanks!'
-  );
-  ee.domain || (
-    ee.domain = location.hostname.split('.'),
-    ee.domain = ee.domain[ee.domain.length - 2] + '.' +
-                ee.domain[ee.domain.length - 1]
-  );
-  ee.mailtoParams || (ee.mailtoParams = {});
-  ee.mailtoParams.subject || (ee.mailtoParams.subject = 'Automated error report failed, here\'s a manual one');
-  ee.mailtoParams.body    || (ee.mailtoParams.body    = 'I found some javascript errors, they are listed below:\n\n');
-
-  ee.stringifyHash || (ee.stringifyHash = stringifyHash); //this works via function hoisting. function declarations(){} get "hoisted" and they are defined from the very first line of javascript
-  function stringifyHash(hash) {
-    var result = '';
-    for (var key in hash) {
-      result += key + ':\n  ' + hash[key] + '\n\n';
-    }
-    return result;
-  }
-
-  var receivedErrorMessages = {};
-  var lastMessageReceived = '';
-
-  //start!
-  //first thing we want to do is ask the user if they even want to email errors.
-  ee.emailErrors = confirm(ee.confirmDialogMessage);
-
-  //now that we have our initialization done and state variables defined,
-  //we define the core function:
-  exceptionalException = function(message) {
-    //check if the user has approved emailing errors
-    if (!ee.emailErrors) return 'User does not want to email errors.';
-
-    console.log('exceptionalException received:', message);
-
-    //make sure the message is a string
-    if (!_.isString(message)) {
-      //ensure stack property is computed
-      message.stack;
-      message = ee.stringifyHash(message);
-    }
-
-    //Add the message to the email body.
-    ee.mailtoParams.body += '\n\n' + message;
-
-    //mark the message as received.
-    if (receivedErrorMessages[message]) return 'already received this error message';
-    receivedErrorMessages[message] = true;
-    lastMessageReceived = message;
-
-    //get a snapshot of the lastMessageReceived at the start of the timeout by using a closure
-    (function(lastMessageAtStartOfTimeout){
-      setTimeout(function(){
-        //if lastMessageReceived has changed since the start of the timeout.. bail
-        if (lastMessageReceived !== lastMessageAtStartOfTimeout) return;
-
-        //re-use message variable under alias
-        var finalUrl = message = 'mailto:unrecordedJavaScriptError@' + ee.domain + ',support@' + ee.domain + '?';
-
-        //mailtoParams needs to be turned into a querystring parameters and appended to finalUrl
-        for (var param in ee.mailtoParams) {
-          if (ee.mailtoParams.hasOwnProperty(param)) {
-            finalUrl += param + '=' + encodeURIComponent(ee.mailtoParams) + '&';
-          }
-        }
-
-        // Now we will attempt to load the mailto link via popup, but if that fails we will just do a redirect to compose the email
-        if (!window.open(finalUrl, null, 'scrollbars=yes,resizable=yes,toolbar=no,location=yes,width=550,height=420,left=445,top=240')) {
-          //window.open arguments taken from twitters tweet button
-          location.href = finalUrl;
-        }
-      }, 100);
-    })(lastMessageReceived);
-  };
-  return exceptionalException(message); //just don't need to do .apply here.
-};
-
-function wrapInTryCatch(func) {
-  function wrappedFunction() {
-    try {
-      return func.apply(this, Array.prototype.slice.call(arguments) );
-    } catch (uncaughtException) {
-
-      // in the event of an uncaught exception, try to send the exception to onuncaughtException
-      try {
-        onuncaughtException(uncaughtException);
-
-        // I use this gnarly try-catch structure instead of several if checks for efficiency
-      } catch (exceptionCallingOnUncaughtException) {
-        // however, if there's a problem with THAT........
-
-        // First check if it's even defined:
-        if (typeof onuncaughtException === 'undefined') {
-
-          // Prompt to define accordingly:
-          if (typeof console !== 'undefined' && console.warn) {
-            console.warn('You should define an onuncaughtException handler for exceptions, SON.');
-          } else if (typeof confirm !== 'undefined' && wrapInTryCatch.defineDialogs !== false) {
-            wrapInTryCatch.defineDialogs = confirm('Please define an uncaughtException handler');
-          }
-          throw e; // will hit window.onerror.
-                   // We could also manually call window.onerror with the same arguments each time so it can be programmed against
-
-        } else { // apparently `onuncaughtException` IS DEFINED...
-          if (Object.prototype.toString.call(onuncaughtException) != '[object Function]') {
-            exceptionalException(new TypeError('onuncaughtException is not a function'));
-          } else {
-            exceptionalException(exceptionCallingOnUncaughtException);
-          }
-        }
-
-      } // for catch exceptionCallingOnUncaughtException
-    } // for catch uncaughtException
-  }
-  return wrappedFunction;
-}
 
 (function shieldJS(global) {
   'use strict';
@@ -218,7 +73,7 @@ var func = shield(function(){
 @class shield
 @constructor shield
 @type Function
-@param apiFn {String || Function} A string must represent a global function like `'$'`, or a space/comma-space seperated list like `'$, $.fn.ready'` <br>
+@param apiFn {String || Function || Array} A string must represent a global function like `'$'`, or a space/comma-space seperated list like `'$, $.fn.ready'` <br>
   Pass in a function, and it will be shieled and returned. `shield`'ing means this function and callbacks
   passed as parameters to it will have all exceptions sent to onuncaughtError, or shield subscribers. (example 4)
 @param {String} [promises] Space or comma-space separated list of promise functions to shield (like $.ajax().done)
@@ -286,17 +141,6 @@ var func = shield(function(){
   }
 
   /**
-   * @method normalize
-   * @param error {Error} an
-   */
-  function shield_normalize(error, callback) {
-    if (callback == null) {
-      // do synchronous normalization
-      return {stack: []};
-    }
-  }
-
-  /**
    * @method report
    * @param arg {Error || Object || String}
    * @constructor
@@ -310,8 +154,6 @@ var func = shield(function(){
     });
     return;
   }
-  return shield.wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
-    apiFn = null;//garbage collected
 
   /**
    * Export shield out to another variable, e.g., `myModule.shield = shield.noConflict();`
