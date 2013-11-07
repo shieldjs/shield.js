@@ -1,6 +1,4 @@
 /*global _:false, extendFunction: false, historicalConsole: false*/
-
-
 (function shieldJS(global) {
   'use strict';
 
@@ -10,12 +8,8 @@
   function applyPatch(irrelevantThis, args) {
     return this(args[0], args[1]);
   }
-  if (!setTimeout.apply) {
-    setTimeout.apply = applyPatch;
-  }
-  if (!setInterval.apply) {
-    setInterval.apply = applyPatch;
-  }
+  setTimeout.apply  || (setTimeout.apply  = applyPatch);
+  setInterval.apply || (setInterval.apply = applyPatch);
 
 /**
 
@@ -92,7 +86,7 @@ var func = shield(function(){
       });
       return;
     }
-    return wrapInTryCatch(extendFunction(apiFn, function(args, prevFunc) {
+    return extendFunction(apiFn, function(args, prevFunc) {
       apiFn = null;//garbage collected
 
       //if function.length (number of listed parameters) is 1, and there are no args, then this is
@@ -137,7 +131,7 @@ var func = shield(function(){
         }
         return ret;
       }
-    }));
+    });
   }
 
   /**
@@ -196,8 +190,10 @@ var func = shield(function(){
     //preserve function.length since wrappedFunction doesn't list arguments!
     wrappedFunction.length = func.length;
     //maintain prototype chain, but not necessarily extend. Extending would be like new Error I think.
-    wrappedFunction.prototype = func.prototype;
+    wrappedFunction.prototype   = func.prototype;
     //I'm pretty sure if someone does `new wrapInTryCatch(..)` nothing different happens at all.
+
+    wrappedFunction.constructor = func.constructor; //same constructor property too..
     return wrappedFunction;
   }
 
