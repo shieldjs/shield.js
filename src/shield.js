@@ -1,5 +1,5 @@
-/*global _:false, extendFunction: false, historicalConsole: false*/
-(function shieldJS(global) {
+/*extendFunction: false, historicalConsole: false, sendUncaughtException: false*/
+(function shieldJS() {
   'use strict';
 
   // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
@@ -184,18 +184,45 @@ var func = shield(function(){
         */
         return func.apply(this, Array.prototype.slice.call(arguments) );
       } catch (uncaughtException) {
-        fireUncaughtExceptionEvent(uncaughtException);
+        return sendUncaughtException(uncaughtException);
       }
     }
-    //preserve function.length since wrappedFunction doesn't list arguments!
-    wrappedFunction.length = func.length;
-    //maintain prototype chain, but not necessarily extend. Extending would be like new Error I think.
-    wrappedFunction.prototype   = func.prototype;
-    //I'm pretty sure if someone does `new wrapInTryCatch(..)` nothing different happens at all.
 
-    wrappedFunction.constructor = func.constructor; //same constructor property too..
+    // Copy properties over:
+    for (var prop in func) {
+      if (Object.prototype.hasOwnProperty.call(func, prop)) {
+        wrappedFunction[prop] = func[prop];
+      }
+    }
+
+    //maintain/preserve prototype and constructor chains. Note: we're not actually creating a new class.
+    wrappedFunction.prototype   = func.prototype;
+    wrappedFunction.constructor = func.constructor;
+    wrappedFunction.name        = func.name || 'httpBitLyDevinsFunctionNamingConvention';
+    // if check non-standard function properties:
+    if (typeof func.length !== 'undefined') { // if 0, then wrappedFunction.length already === 0
+      wrappedFunction.length = func.length; //wrappedFunction doesn't list arguments!
+    }
+    if (func.__proto__) {
+      wrappedFunction.__proto__ = func.__proto__;
+    }
+
+    //Note: if someone does `new wrapInTryCatch(..)` nothing different happens at all.
     return wrappedFunction;
-  }
+  } // end shield_wrap
+
+  window['onuncaughtException'] = function(exception) {
+    // Ensure stack property is computed. Or, attempt to alias Opera 10's stacktrace property to it
+    ex.stack || (ex.stacktrace ? (ex.stack = ex.stacktrace) : '');
+    var message = exception.message;
+    try {
+      delete exception.message;
+    } catch (e) {
+      alert('probably doing delete exception.message:', e.messgage, e.stack, e.stacktrace);
+      throw e;
+    }
+    analytics.track(message, exception);
+  };
 
   shield.wrap = shield_wrap;
   shield.report = shield_report;
