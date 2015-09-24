@@ -3,13 +3,13 @@
   'use strict'
 
   // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
-  // also only supports 2 argument and doesn't care what "this" is, so we
+  // also only supports 2 arguments and doesn't care what "this" is, so we
   // can just call the original function directly.
   function applyPatch(irrelevantThis, args) {
     return this(args[0], args[1])
   }
   setTimeout.apply  || (setTimeout.apply  = applyPatch)
-  setInterval.apply || (setInterval.apply = applyPatch)
+  setInterval.apply || (setInterval.apply = applyPatch) // No need to patch .call since we can never assume 1 argument.
   // This is the only thing we need to do to support IE < 9, and for simplicity should always stay here
 
 /**
@@ -17,30 +17,30 @@
 ## The main `shield` function does a few things:
 
 
-1. Wraps a callback in a try/catch block:
+1.) Wraps a callback in a try/catch block:
 
 ```
 shield(function(){
     //your program
-})();
+})()
 ```
 
-2. Optionally include a `console` param to use our historicalConsole
+2.) Optionally include a `console` param to use our historicalConsole plugin to include console.log's in your error reports.
 
 ```
 shield(function(console){
-})();
+})()
 ```
 
 For documentation regarding keeping a console history, see
 <a href="https://github.com/devinrhode2/historicalConsole.js">github.com/devinrhode2/historicalConsole.js</a>
 <br /><br />
 
-3. Modify global api functions so their callbacks are also wrapped in a try/catch block:
+3.) Modify global api functions so their callbacks are also wrapped in a try/catch block:
 
 ```
-shield('$');
-shield('$, $.fn.on, $.fn.ready
+shield('$')
+shield('$, $.fn.on, $.fn.ready')
 
 
 //Now errors in these callbacks will be caught, and there's no need for a try/catch block:
@@ -49,24 +49,23 @@ $('#foo').on('click', function(){})
 $(document).ready(function(){})
 ```
 
-4. Use it for easier try/catch blocks. Instead of:
+4.) Use it for easier try/catch blocks. Instead of:
 
 ```
 var func = function() {
     //your function
-};
+}
 
 // add shield:
 var func = shield(function(){
     //no need for a try/catch block now, shield has it taken care of
-});
+})
 ```
 
-### Do not invoke with `new`
+This function and all shield methods should not be invoked with `new`
 
 
 @class shield
-@constructor shield
 @type Function
 @param apiFn {String || Function || Array} A string must represent a global function like `'$'`, or a space/comma-space seperated list like `'$, $.fn.ready'` <br>
   Pass in a function, and it will be shieled and returned. `shield`'ing means this function and callbacks
@@ -99,12 +98,17 @@ var func = shield(function(){
         var prevFnString = prevFunc.toString()
         var firstParen = prevFnString.indexOf('(')
         var secondParen = prevFnString.indexOf(')', firstParen)
-        if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1 && typeof historicalConsole !== 'undefined') {
-          //historicalConsole takes in a function and returns one that will receive the first arg as the console.
-          //The second arg is a unique identifier to use another scope's historical console object
-          //options.url is probably a deent unique identifier.
-          //We could ask the user to name the app (shield.options.appName('thing')
-          return historicalConsole(prevFunc/*, options.url*/)
+        if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1) {
+          if (typeof historicalConsole !== 'undefined') {
+            //historicalConsole takes in a function and returns one that will receive the first arg as the console.
+            //The second arg is a unique identifier to use another scope's historical console object
+            //options.url is probably a deent unique identifier.
+            //We could ask the user to name the app (shield.options.appName('thing')
+            return historicalConsole(prevFunc/*, options.url*/)
+          } else {
+            console.log('to use our historicalConsole please use a build which contains historicalConsole.js')
+            return prevFunc
+          }
         } else {
           return prevFunc
         }
@@ -150,17 +154,24 @@ var func = shield(function(){
   }
 
 
+  /**
+   * ### shield.wrap, wrap a function in a try/catch block while preserving prototypes and properties
+   *
+   * @method wrap
+   * @namespace shield
+   * @param func {Function} Function to wrap in try/catch block
+   * @return {Function}
+   */
   function shield_wrap(func) {
     // Define a function that simply returns what func returns, and forwards the arguments
     function wrappedFunction() {
       try {
-        /**
+        /*
         If someone does new SomeWrappedFunction(),
         the value of this is an instanceof wrappedFunction.
 
-        But thanks to the line at the bottom of wrapInTryCatch,
+        But thanks to the line at the bottom of shield_wrap,
         wrappedFunction is an instanceof the original function,
-
         `this` gets all the right properties, but a resulting objects properties may not
         be it's *own* properties.. well this check shows there are zero side effects:
 
@@ -179,7 +190,7 @@ var func = shield(function(){
         }
         printThis();
         printProperties(new printThis());
-        printThis = wrapInTryCatch(printThis);
+        printThis = shield_wrap(printThis);
         printThis();
         printProperties(new printThis());
         */
@@ -195,35 +206,54 @@ var func = shield(function(){
         wrappedFunction[prop] = func[prop]
       }
     }
+    // actually does setting wrappedFunction.prototype to func.prototype below preserve properties, making the above for loop unnecessary
 
     //maintain/preserve prototype and constructor chains. Note: we're not actually creating a new class.
     wrappedFunction.prototype   = func.prototype
     wrappedFunction.constructor = func.constructor
-    wrappedFunction.name        = func.name || 'httpBitLyDevinsFunctionNamingConvention'
+    wrappedFunction.name        = func.name || 'anonymous_shield_wrapped_function'
     // if check non-standard function properties:
     if (typeof func.length !== 'undefined') { // if 0, then wrappedFunction.length already === 0
-      wrappedFunction.length = func.length //wrappedFunction doesn't list arguments!
+      wrappedFunction.length = func.length //wrappedFunction doesn't list arguments! so we at least copy over the 'length' of arguments.
     }
     if (func.__proto__) {
       wrappedFunction.__proto__ = func.__proto__
     }
 
-    //Note: if someone does `new wrapInTryCatch(..)` nothing different happens at all.
+    //Note: if someone does `new shield_wrap(..)` nothing different happens at all.
     return wrappedFunction
   } // end shield_wrap
 
-  window['onuncaughtException'] = function(exception) {
+  /**
+   * shield.report reports an exception to the server..
+   *
+   * shield.report returns nothing.
+   *
+   * @method report
+   * @namespace shield
+   * @type Function
+   */
+  function shield_report() {
+    return analytics.track.apply(analytics, arguments);
+  }
+
+  window['onuncaughtException'] = function(ex) {
     // Ensure stack property is computed. Or, attempt to alias Opera 10's stacktrace property to it
     ex.stack || (ex.stacktrace ? (ex.stack = ex.stacktrace) : '')
-    var message = exception.message
+    var message = ex.message
     try {
-      delete exception.message
+      //because we don't want to duplicate the message with the 
+      delete ex.message
     } catch (e) {
-      alert('probably doing delete exception.message:', e.messgage, e.stack, e.stacktrace)
+      alert('exception doing `delete ex.message`. e.message:' + e.message + ' e.stack: ' + e.stack + ' e.stacktrace: ' + e.stacktrace)
       throw e
     }
     if (window.analytics && analytics.track) {
       analytics.track(message, exception)
+    } else {
+      console.log('nowhere to send this exception', ex)
+      alert('analytics.track is not defined, so shield.js does not know what to do with the console.log\'d exception')
+    }
   }
 
   shield.wrap = shield_wrap
@@ -232,25 +262,25 @@ var func = shield(function(){
 
   // Export/define library just like lodash
 
-  /** Used to determine if values are of the language type Object */
+  // Used to determine if values are of the language type Object
   var objectTypes = {
     'function': true,
     'object': true
   }
 
-  /** Used as a reference to the global object */
+  // Used as a reference to the global object
   var root = (objectTypes[typeof window] && window) || this;
 
-  /** Detect free variable `exports` */
+  // Detect free variable `exports`
   var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
 
-  /** Detect free variable `module` */
+  // Detect free variable `module`
   var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
 
-  /** Detect the popular CommonJS extension `module.exports` */
+  // Detect the popular CommonJS extension `module.exports`
   var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
 
-  /** Detect free variable `global` from Node.js or Browserified code and use it as `root` */
+  // Detect free variable `global` from Node.js or Browserified code and use it as `root`
   var freeGlobal = objectTypes[typeof global] && global;
   if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {
     root = freeGlobal;
