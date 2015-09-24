@@ -4,6 +4,7 @@
   "url": "https://github.com/shieldjs/shield.js",
   "description": "Shows you how bad your JavaScript code is.",
   "devDependencies": {
+    "broccoli": "^0.16.8",
     "extend-function": "latest",
     "grunt": "~0.4.0",
     "grunt-closure-compiler": "latest",
