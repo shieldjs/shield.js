@@ -6,7 +6,10 @@
 ### Docs with [yuidoc](http://yui.github.com/yuidoc/)
 
 ```
-sudo npm install -g yuidocjs
+cd projects
+git clone devinrhode2/shield.js
+cd shield.js
+npm install -g yuidocjs
 make
 open http://localhost:2000/
 ```
