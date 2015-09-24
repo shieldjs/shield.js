@@ -1,15 +1,16 @@
 /*extendFunction: false, historicalConsole: false, sendUncaughtException: false*/
 (function shieldJS() {
-  'use strict';
+  'use strict'
 
   // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
   // also only supports 2 argument and doesn't care what "this" is, so we
   // can just call the original function directly.
   function applyPatch(irrelevantThis, args) {
-    return this(args[0], args[1]);
+    return this(args[0], args[1])
   }
-  setTimeout.apply  || (setTimeout.apply  = applyPatch);
-  setInterval.apply || (setInterval.apply = applyPatch);
+  setTimeout.apply  || (setTimeout.apply  = applyPatch)
+  setInterval.apply || (setInterval.apply = applyPatch)
+  // This is the only thing we need to do to support IE < 9, and for simplicity should always stay here
 
 /**
 
@@ -76,18 +77,18 @@ var func = shield(function(){
   function shield(apiFn, promises) {
     if (_.isString(apiFn)) {
       if (apiFn.indexOf(' ') > -1) {
-        apiFn.replace(/\,/g, ''); //allow '$, $.fn.on, $.fn.ready'
-        apiFn = apiFn.split(' ');
+        apiFn.replace(/\,/g, '') //allow '$, $.fn.on, $.fn.ready'
+        apiFn = apiFn.split(' ')
       }
     }
     if (_.isArray(apiFn)) {
       _.each(apiFn, function(api){
-        shield(api);
-      });
-      return;
+        shield(api)
+      })
+      return
     }
     return extendFunction(apiFn, function(args, prevFunc) {
-      apiFn = null;//garbage collected
+      apiFn = null //garbage collected
 
       //if function.length (number of listed parameters) is 1, and there are no args, then this is
       //shield(function(console){})()
@@ -95,41 +96,41 @@ var func = shield(function(){
       if (prevFunc.length === 1 && args.length === 0) {
 
         //verify a 'console' param
-        var prevFnString = prevFunc.toString();
-        var firstParen = prevFnString.indexOf('(');
-        var secondParen = prevFnString.indexOf(')', firstParen);
+        var prevFnString = prevFunc.toString()
+        var firstParen = prevFnString.indexOf('(')
+        var secondParen = prevFnString.indexOf(')', firstParen)
         if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1 && typeof historicalConsole !== 'undefined') {
           //historicalConsole takes in a function and returns one that will receive the first arg as the console.
           //The second arg is a unique identifier to use another scope's historical console object
           //options.url is probably a deent unique identifier.
           //We could ask the user to name the app (shield.options.appName('thing')
-          return historicalConsole(prevFunc/*, options.url*/);
+          return historicalConsole(prevFunc/*, options.url*/)
         } else {
-          return prevFunc;
+          return prevFunc
         }
       } else {
         //instead of just doing apiFn.apply, we interate through args
         //and if an arg is a function then we wrap then we swap that fn for callback in a try/catch
-        var length = args.length;
+        var length = args.length
         //before executing the overriden function, transform each function arg to have a try/catch wrapper
         //I'd prefer to keep the while/length style iteration here for performance, since this can be rather important
-        var arg;
+        var arg
         while (arg = args[--length]) {
           if (_.isFunction(arg)) {
-            arg = wrapInTryCatch(arg);
+            arg = wrapInTryCatch(arg)
           }
         }
 
         //now we apply the modified arguments:
-        var ret = prevFunc.apply(this, args);
+        var ret = prevFunc.apply(this, args)
         if (promises) {
-          promises = promises.split(' ');
-          var promise;
+          promises = promises.split(' ')
+          var promise
           while(promise = promises.pop()) {
-            ret[promise] = shield(ret[promise]);
+            ret[promise] = shield(ret[promise])
           }
         }
-        return ret;
+        return ret
       }
     });
   }
@@ -142,10 +143,10 @@ var func = shield(function(){
    * @return {Function} the currently defined window.shield (now defined to the previous
        window.shield, which may or may not be defined)
    */
-  var oldShield = window.shield;
+  var oldShield = window.shield //window.shield may or may not be defined.
   function shield_noConflict() {
-    window.shield = oldShield;
-    return shield;
+    window.shield = oldShield
+    return shield
   }
 
 
@@ -182,51 +183,52 @@ var func = shield(function(){
         printThis();
         printProperties(new printThis());
         */
-        return func.apply(this, Array.prototype.slice.call(arguments) );
+        return func.apply(this, Array.prototype.slice.call(arguments) )
       } catch (uncaughtException) {
-        return sendUncaughtException(uncaughtException);
+        return sendUncaughtException(uncaughtException)
       }
     }
 
     // Copy properties over:
     for (var prop in func) {
       if (Object.prototype.hasOwnProperty.call(func, prop)) {
-        wrappedFunction[prop] = func[prop];
+        wrappedFunction[prop] = func[prop]
       }
     }
 
     //maintain/preserve prototype and constructor chains. Note: we're not actually creating a new class.
-    wrappedFunction.prototype   = func.prototype;
-    wrappedFunction.constructor = func.constructor;
-    wrappedFunction.name        = func.name || 'httpBitLyDevinsFunctionNamingConvention';
+    wrappedFunction.prototype   = func.prototype
+    wrappedFunction.constructor = func.constructor
+    wrappedFunction.name        = func.name || 'httpBitLyDevinsFunctionNamingConvention'
     // if check non-standard function properties:
     if (typeof func.length !== 'undefined') { // if 0, then wrappedFunction.length already === 0
-      wrappedFunction.length = func.length; //wrappedFunction doesn't list arguments!
+      wrappedFunction.length = func.length //wrappedFunction doesn't list arguments!
     }
     if (func.__proto__) {
-      wrappedFunction.__proto__ = func.__proto__;
+      wrappedFunction.__proto__ = func.__proto__
     }
 
     //Note: if someone does `new wrapInTryCatch(..)` nothing different happens at all.
-    return wrappedFunction;
+    return wrappedFunction
   } // end shield_wrap
 
   window['onuncaughtException'] = function(exception) {
     // Ensure stack property is computed. Or, attempt to alias Opera 10's stacktrace property to it
-    ex.stack || (ex.stacktrace ? (ex.stack = ex.stacktrace) : '');
-    var message = exception.message;
+    ex.stack || (ex.stacktrace ? (ex.stack = ex.stacktrace) : '')
+    var message = exception.message
     try {
-      delete exception.message;
+      delete exception.message
     } catch (e) {
-      alert('probably doing delete exception.message:', e.messgage, e.stack, e.stacktrace);
-      throw e;
+      alert('probably doing delete exception.message:', e.messgage, e.stack, e.stacktrace)
+      throw e
     }
-    analytics.track(message, exception);
-  };
+    if (window.analytics && analytics.track) {
+      analytics.track(message, exception)
+  }
 
-  shield.wrap = shield_wrap;
-  shield.report = shield_report;
-  shield.noConflict = shield_noConflict;
+  shield.wrap = shield_wrap
+  shield.report = shield_report
+  shield.noConflict = shield_noConflict
 
   // Export/define library just like lodash
 
@@ -234,7 +236,7 @@ var func = shield(function(){
   var objectTypes = {
     'function': true,
     'object': true
-  };
+  }
 
   /** Used as a reference to the global object */
   var root = (objectTypes[typeof window] && window) || this;
@@ -276,4 +278,4 @@ var func = shield(function(){
     // in a browser or Rhino
     root.shield = shield;
   }
-}).call(this);
+}).call(this)
