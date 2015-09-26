@@ -100,20 +100,11 @@ module.exports = function(grunt) {
       jQuery: ['src/shield.jquery.js'],
       historicalConsoleAndjQuery: ['node_modules/historical-console/historicalConsole.js', 'src/shield.jquery.js']
     }),
-    jasmine: {
-      src: '*.js',
-      specs: 'spec/**/*Spec.js',
-      timeout: 10000,
-      junit: {
-        output: 'junit/'
-      }
-    },
 
     watch: {
       files: ['Gruntfile.js', 'package.json', 'src/**/*.js', 'test/**/*.js'],
       tasks: ['default']
     }
-
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');

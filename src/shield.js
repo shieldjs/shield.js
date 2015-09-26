@@ -12,9 +12,20 @@
   setInterval.apply || (setInterval.apply = applyPatch) // No need to patch .call since we can never assume 1 argument.
   // This is the only thing we need to do to support IE < 9, and for simplicity should always stay here
 
+  // local sendUncaughtException may call global sendUncaughtException
+  function sendUncaughtException(e) {
+    if (window.sendUncaughtException) {
+      return sendUncaughtException(e)
+    } else if (window.onuncaughtException) {
+      return onuncaughtException(e)
+    } else {
+      throw e
+    }
+  }
+
 /**
 
-## The main `shield` function does a few things:
+## The main shield function does a few things:
 
 
 1.) Wraps a callback in a try/catch block:
@@ -99,7 +110,7 @@ This function and all shield methods should not be invoked with `new`
         var firstParen = prevFnString.indexOf('(')
         var secondParen = prevFnString.indexOf(')', firstParen)
         if (prevFnString.substring(firstParen, secondParen).indexOf('console') > -1) {
-          if (typeof historicalConsole !== 'undefined') {
+          if (window.historicalConsole) {
             //historicalConsole takes in a function and returns one that will receive the first arg as the console.
             //The second arg is a unique identifier to use another scope's historical console object
             //options.url is probably a deent unique identifier.
@@ -121,7 +132,7 @@ This function and all shield methods should not be invoked with `new`
         var arg
         while (arg = args[--length]) {
           if (_.isFunction(arg)) {
-            arg = wrapInTryCatch(arg)
+            arg = shield_wrap(arg)
           }
         }
 

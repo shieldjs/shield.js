@@ -9,7 +9,7 @@ isn't on the page. Fail safely w/ `$('#button', failsafe)`
 function shield_jquery_js() {
   'use strict';
 
-  if (typeof window.failsafe !== 'undefined') {
+  if (window.failsafe) {
     console.log('looks like you already have a failsafe variable defined. ');
   } else {
     window.failsafe = 'failsafe';

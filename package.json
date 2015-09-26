@@ -15,8 +15,9 @@
     "historical-console": "latest"
   },
   "dependencies": {
+    "extend-function": "git://github.com/devinrhode2/extendFunction.js.git",
     "historical-console": "git://github.com/devinrhode2/historicalConsole.js.git",
-    "extend-function": "git://github.com/devinrhode2/extendFunction.js.git"
+    "sendUncaughtException": "devinrhode2/sendUncaughtException"
   },
   "scripts": {
     "test": "grunt travis --verbose"
