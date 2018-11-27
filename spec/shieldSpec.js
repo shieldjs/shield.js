@@ -1,7 +1,7 @@
 describe('shield.js', function() {
-  describe('Shield#normalize', function() {
+  describe('shield#normalize', function() {
     it('should return normalized error synchronously', function() {
-      var obj = Shield.normalize();
+      var obj = shield.normalize();
       expect(obj.stack).toEqual([]);
       expect(obj.stack.length).toBe(0);
     });
@@ -10,11 +10,11 @@ describe('shield.js', function() {
         expect(obj.stack).toEqual([]);
         expect(obj.stack.length).toBe(0);
       };
-      Shield.normalize(cb);
+      shield.normalize(cb);
     })
   });
 
-  describe('Shield#report', function() {
+  describe('shield#report', function() {
 
   });
 });
