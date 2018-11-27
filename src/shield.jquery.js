@@ -5,6 +5,8 @@ Wish jQuery would bark when you had a bad selector?
 Maybe `$('#buttonn')` was a typo or `#button` actually
 isn't on the page. Fail safely w/ `$('#button', failsafe)`
 
+Simple copy pasta version without shield.js: 
+
 */
 function shield_jquery_js() {
   'use strict';
